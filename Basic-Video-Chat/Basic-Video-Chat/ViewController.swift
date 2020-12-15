@@ -160,13 +160,36 @@ extension ViewController: OTPublisherDelegate {
 // MARK: - OTSubscriber delegate callbacks
 extension ViewController: OTSubscriberDelegate {
     func subscriberDidConnect(toStream subscriberKit: OTSubscriberKit) {
+        let subsStreamW = subscriber!.stream!.videoDimensions.width;
+        let subsStreamH = subscriber!.stream!.videoDimensions.height;
+        let subsStreamFormFactor = Double(subsStreamH) / Double(subsStreamW);
+        let subsViewW = Double(kWidgetWidth);
+        let subsViewH = Double(kWidgetWidth) * subsStreamFormFactor;
         if let subsView = subscriber?.view {
-            subsView.frame = CGRect(x: 0, y: kWidgetHeight, width: kWidgetWidth, height: kWidgetHeight)
+            subsView.frame = CGRect(x: 0, y: subsViewH, width: subsViewW, height: subsViewH)
             view.addSubview(subsView)
         }
     }
     
     func subscriber(_ subscriber: OTSubscriberKit, didFailWithError error: OTError) {
         print("Subscriber failed: \(error.localizedDescription)")
+    }
+
+    func subscriberVideoDataReceived(_ subscriber: OTSubscriber) {
+        let subsStreamW = subscriber.stream!.videoDimensions.width;
+        let subsStreamH = subscriber.stream!.videoDimensions.height;
+        let subsStreamFormFactor = Double(subsStreamH) / Double(subsStreamW);
+        let currentW = subscriber.view!.frame.size.width;
+        let currentH = subscriber.view!.frame.size.height;
+        let currentFormFactor = Double(currentH) / Double(currentW);
+        if (abs(currentFormFactor - subsStreamFormFactor) > 0.001) {
+            let subsViewW = Double(kWidgetWidth);
+            let subsViewH = Double(kWidgetWidth) * subsStreamFormFactor;
+            subscriber.view?.removeFromSuperview();
+            if let subsView = subscriber.view {
+                subsView.frame = CGRect(x: 0, y: subsViewH, width: subsViewW, height: subsViewH)
+                view.addSubview(subsView)
+            }
+        }
     }
 }
